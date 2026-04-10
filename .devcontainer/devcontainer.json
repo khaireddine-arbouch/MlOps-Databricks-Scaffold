@@ -5,13 +5,9 @@
 	"build": {
 		"dockerfile": "Dockerfile",
 		"context": "..",
-		"args": { 
-			// Update 'VARIANT' to pick a Python version: 3, 3.10, 3.9, 3.8, 3.7, 3.6
-			// Append -bullseye or -buster to pin to an OS version.
-			// Use -bullseye variants on local on arm64/Apple Silicon.
-			"VARIANT": "3.10-bullseye",
-			// Options
-			"NODE_VERSION": "none"
+		"args": {
+			// Must include OS suffix (e.g. 3.11-bookworm); bare :3.11 breaks docker pull on Codespaces.
+			"VARIANT": "3.11-bookworm"
 		}
 	},
 
@@ -20,7 +16,9 @@
 		// Configure properties specific to VS Code.
 		"vscode": {
 			// Set *default* container specific settings.json values on container create.
-			"settings": { 
+			"settings": {
+				// If false, integrated terminals do not get remoteEnv (Databricks CLI sees no DATABRICKS_HOST → ://None).
+				"terminal.integrated.inheritEnv": true,
 				"python.defaultInterpreterPath": "/usr/local/bin/python",
 				"python.linting.enabled": true,
 				"python.linting.pylintEnabled": true,
@@ -49,22 +47,21 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
-	// Forward Codespaces secrets from the host into the container (otherwise DATABRICKS_* may be unset here and the CLI builds URLs like "://None/...").
-	// Secret names are case-insensitive on GitHub; env vars are typically uppercase (e.g. DATABRICKS_HOST).
+	// Forward Codespaces secrets: host "localEnv" is the Codespaces runner (where secrets are injected).
+	// containerEnv = all processes in the container; remoteEnv = VS Code server + subprocesses (see also terminal.integrated.inheritEnv).
+	"containerEnv": {
+		"DATABRICKS_HOST": "${localEnv:DATABRICKS_HOST}",
+		"DATABRICKS_TOKEN": "${localEnv:DATABRICKS_TOKEN}",
+		"DATABRICKS_HTTP_PATH": "${localEnv:DATABRICKS_HTTP_PATH}"
+	},
 	"remoteEnv": {
 		"DATABRICKS_HOST": "${localEnv:DATABRICKS_HOST}",
 		"DATABRICKS_TOKEN": "${localEnv:DATABRICKS_TOKEN}",
 		"DATABRICKS_HTTP_PATH": "${localEnv:DATABRICKS_HTTP_PATH}"
 	},
 
-	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "virtualenv ~/.venv && echo 'source ~/.venv/bin/activate' >> ~/.bashrc && make install",
-
-	// Runs on every start: apply DATABRICKS_* to ~/.databrickscfg (after remoteEnv is in effect).
-	"postStartCommand": "bash ${containerWorkspaceFolder}/.devcontainer/setup-databricks.sh",
-
-	// Runs when you open the Codespace; covers cases where postStart ran before secrets were visible.
-	"postAttachCommand": "bash ${containerWorkspaceFolder}/.devcontainer/setup-databricks.sh",
+	// One-time: hook Databricks host normalization into new shells (script ships in the image; see Dockerfile).
+	"postCreateCommand": "virtualenv ~/.venv && echo 'source ~/.venv/bin/activate' >> ~/.bashrc && (grep -qF 'databricks-codespaces-env.sh' ~/.bashrc || echo '. /usr/local/etc/databricks-codespaces-env.sh' >> ~/.bashrc) && make install",
 
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode"
