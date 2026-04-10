@@ -1,0 +1,20 @@
+{
+    "name": "Databricks Dev Environment",
+    "build": {
+      "dockerfile": "Dockerfile"
+    },
+    "remoteEnv": {
+      "DATABRICKS_HOST": "${localEnv:DATABRICKS_HOST}",
+      "DATABRICKS_TOKEN": "${localEnv:DATABRICKS_TOKEN}",
+      "DATABRICKS_HTTP_PATH": "${localEnv:DATABRICKS_HTTP_PATH}"
+    },
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "ms-python.python",
+          "ms-toolsai.jupyter",
+          "github.copilot"
+        ]
+      }
+    }
+  }
