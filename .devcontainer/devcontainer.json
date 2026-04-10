@@ -63,6 +63,10 @@
 	// One-time: hook Databricks host normalization into new shells (script ships in the image; see Dockerfile).
 	"postCreateCommand": "virtualenv ~/.venv && echo 'source ~/.venv/bin/activate' >> ~/.bashrc && (grep -qF 'databricks-codespaces-env.sh' ~/.bashrc || echo '. /usr/local/etc/databricks-codespaces-env.sh' >> ~/.bashrc) && make install",
 
+	// Refresh ~/.databrickscfg when the container starts (needed for `databricks fs` / DBFS; see Dockerfile).
+	"postStartCommand": "/usr/local/bin/ensure-databricks-cfg",
+	"postAttachCommand": "/usr/local/bin/ensure-databricks-cfg",
+
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode"
 }
