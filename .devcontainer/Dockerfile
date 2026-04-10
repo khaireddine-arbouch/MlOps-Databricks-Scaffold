@@ -28,3 +28,6 @@ RUN printf '%s\n' \
 RUN pip install --no-cache-dir \
 	databricks-cli \
 	databricks-sql-connector
+
+# Install project dependencies
+RUN pip install --no-cache-dir -r /workspaces/MlOps-Databricks-Scaffold/requirements.txt
